@@ -1,0 +1,15 @@
+{
+  "name": "Tích Đức — Gõ Mõ Online",
+  "short_name": "Tích Đức",
+  "description": "Gõ mõ online, tích công đức, xem lịch âm và rút quẻ mỗi ngày.",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fffaf2",
+  "theme_color": "#fffaf2",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

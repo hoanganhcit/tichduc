@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chính Điện 3D — Tích Đức</title>
+<meta name="description" content="Vào chính điện 3D, thắp hương, vái lạy và gửi lời nguyện ngay trên trình duyệt.">
+<meta name="theme-color" content="#2a0c06">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,600;1,500&display=swap">
+<style>
+  :root{--saffron:#f28c28;--gold:#f2b53a;--maroon:#9a2232;--ink:#3b2416;--muted:#8c6f5a;--cream:#fffaf2;
+    --sans:"Be Vietnam Pro",system-ui,sans-serif;--serif:"Noto Serif",serif}
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;overflow:hidden;background:#2a0c06;color:var(--ink);font:15px/1.5 var(--sans);-webkit-tap-highlight-color:transparent}
+  button,input{font:inherit;color:inherit;border:0;background:none}
+  button{cursor:pointer}
+  #scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  #scene:active{cursor:grabbing}
+
+  .top{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;pointer-events:none}
+  .top>*{pointer-events:auto}
+  .back{display:flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:99px;background:rgba(255,250,242,.92);font-weight:600;text-decoration:none;color:var(--maroon);box-shadow:0 4px 16px rgba(0,0,0,.25)}
+  .count{padding:6px 12px;border-radius:99px;background:rgba(0,0,0,.35);color:#ffe6b0;font-size:13px}
+  .count:empty{display:none}
+  .pills{display:grid;gap:6px;justify-items:end}
+  .emotes{position:fixed;right:12px;top:50%;translate:0 -50%;display:grid;gap:8px}
+  .emotes[hidden]{display:none}
+  .emotes button{width:44px;height:44px;border-radius:50%;background:rgba(255,250,242,.9);font-size:20px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  .emotes button:disabled{opacity:.5}
+
+  .panel{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));translate:-50% 0;width:min(440px,calc(100% - 24px));padding:16px;border-radius:24px;background:rgba(255,250,242,.95);backdrop-filter:blur(10px);box-shadow:0 12px 40px rgba(0,0,0,.35);display:grid;gap:12px;text-align:center;transition:opacity .3s,translate .3s}
+  .panel.hide{opacity:0;translate:-50% 20px;pointer-events:none}
+  .step{font-size:12px;font-weight:600;letter-spacing:.12em;color:var(--saffron)}
+  .title{font:600 19px var(--serif);color:var(--maroon)}
+  .desc{font-size:13px;color:var(--muted)}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1}
+  .btn{padding:13px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--saffron));color:#fff;font-weight:600;box-shadow:0 6px 16px rgba(242,140,40,.35)}
+  .btn:disabled{opacity:.5}
+  .btn.ghost{background:#fff3e0;color:var(--maroon);box-shadow:none}
+  .opt{padding:12px 4px;border-radius:16px;border:2px solid #f1e3cf;background:#fff;font-weight:600}
+  .opt small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+  .opt.on{border-color:var(--saffron);background:#fff3e0}
+  .wish{width:100%;padding:12px 14px;border-radius:14px;border:1px solid #f1e3cf;background:#fff}
+  .wish:focus{outline:2px solid var(--saffron)}
+  .hint{position:fixed;top:64px;left:50%;translate:-50% 0;padding:6px 14px;border-radius:99px;background:rgba(0,0,0,.4);color:#ffe6b0;font-size:12px;transition:opacity .6s;pointer-events:none}
+
+  /* Tạo nhân vật: nửa trên là cảnh 3D xem trước, nửa dưới là bảng chọn */
+  .creator{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;transition:opacity .6s,translate .6s}
+  .creator.hide{opacity:0;translate:0 40px;pointer-events:none}
+  .cr-sheet{width:min(480px,100%);max-height:58dvh;overflow:auto;padding:22px 20px calc(18px + env(safe-area-inset-bottom));border-radius:28px 28px 0 0;background:var(--cream);box-shadow:0 -10px 40px rgba(0,0,0,.35);display:grid;gap:8px}
+  .cr-sheet h2{font:600 20px var(--serif);color:var(--maroon)}
+  .cr-label{margin-top:6px;font-size:13px;font-weight:600;color:var(--muted)}
+  .cr-row{display:flex;gap:8px}
+  .dice{width:48px;border-radius:14px;background:#fff3e0;font-size:20px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips button{padding:8px 16px;border-radius:99px;background:#fff;border:1.5px solid #f1e3cf;font-size:14px;font-weight:500}
+  .chips button.on{background:var(--maroon);border-color:var(--maroon);color:#fff}
+  .swatches button{width:40px;height:40px;padding:0;border:3px solid #fff;box-shadow:0 0 0 1.5px #f1e3cf}
+  .swatches button.on{background:inherit;box-shadow:0 0 0 3px var(--maroon)}
+  .creator .btn{margin-top:12px}
+  .cr-note{text-align:center;font-size:12px;color:var(--muted)}
+
+  .wish-float{position:fixed;left:50%;top:38%;translate:-50% 0;max-width:80%;font:italic 500 20px var(--serif);color:#ffe6b0;text-align:center;text-shadow:0 0 18px rgba(255,180,60,.9);animation:wishUp 4s ease-out forwards;pointer-events:none}
+  @keyframes wishUp{0%{opacity:0;transform:translateY(20px)}20%{opacity:1}100%{opacity:0;transform:translateY(-140px)}}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="scene" aria-label="Chính điện 3D"></canvas>
+
+<div class="top">
+  <a class="back" href="./">‹ Gõ mõ</a>
+  <div class="pills"><span class="count" id="people" hidden></span><span class="count" id="count"></span></div>
+</div>
+<div class="emotes" id="emotes" hidden>
+  <button data-e="🙏" aria-label="Chắp tay">🙏</button>
+  <button data-e="🪷" aria-label="Hoa sen">🪷</button>
+  <button data-e="❤️" aria-label="Thương mến">❤️</button>
+  <button data-e="☸️" aria-label="Pháp luân">☸️</button>
+</div>
+<div class="hint" id="hint">Kéo để nhìn xung quanh</div>
+
+<div class="panel hide" id="panel">
+  <div class="step" id="p-step"></div>
+  <div class="title" id="p-title"></div>
+  <div class="desc" id="p-desc"></div>
+  <div id="p-body"></div>
+</div>
+
+<div class="creator" id="creator">
+  <div class="cr-sheet">
+    <h2>Tạo nhân vật</h2>
+    <label class="cr-label" for="cr-name">Pháp danh / tên hiển thị</label>
+    <div class="cr-row">
+      <input class="wish" id="cr-name" maxlength="20" placeholder="VD: Diệu Tâm">
+      <button class="dice" id="cr-dice" title="Gợi ý tên" aria-label="Gợi ý tên ngẫu nhiên">🎲</button>
+    </div>
+    <div class="cr-label">Giới tính</div>
+    <div class="chips" data-key="gender"><button data-v="nam">Nam</button><button data-v="nu">Nữ</button></div>
+    <div class="cr-label">Kiểu tóc</div>
+    <div class="chips" data-key="hair"><button data-v="troc">Trọc</button><button data-v="ngan">Ngắn</button><button data-v="bui">Búi</button><button data-v="dai">Dài</button></div>
+    <div class="cr-label">Màu da</div>
+    <div class="chips swatches" data-key="skin"></div>
+    <div class="cr-label">Áo</div>
+    <div class="chips" data-key="outfit"><button data-v="lam">Áo tràng lam</button><button data-v="nau">Áo nâu sồng</button><button data-v="xam">Áo chú tiểu xám</button></div>
+    <button class="btn" id="btn-enter" disabled>Đang tải…</button>
+    <p class="cr-note">Nên bật âm thanh để nghe tiếng chuông</p>
+  </div>
+</div>
+
+<script type="module" src="chua.js"></script>
+</body>
+</html>

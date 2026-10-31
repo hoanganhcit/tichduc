@@ -1,0 +1,5 @@
+node_modules/
+.vercel/
+.env*
+server/data.json
+server/data.json.tmp

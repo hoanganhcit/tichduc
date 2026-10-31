@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMin slice">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a1a14"/><stop offset=".45" stop-color="#b8401c"/><stop offset="1" stop-color="#e0843a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1b0"/><stop offset=".5" stop-color="#f2b53a"/><stop offset="1" stop-color="#b8781c"/>
+    </linearGradient>
+    <linearGradient id="goldH" x1="0" x2="1">
+      <stop offset="0" stop-color="#b8781c"/><stop offset=".5" stop-color="#ffe08a"/><stop offset="1" stop-color="#b8781c"/>
+    </linearGradient>
+    <linearGradient id="col" x1="0" x2="1">
+      <stop offset="0" stop-color="#6e1010"/><stop offset=".45" stop-color="#d23c2e"/><stop offset="1" stop-color="#6e1010"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c8602a"/><stop offset="1" stop-color="#7a2a14"/>
+    </linearGradient>
+    <radialGradient id="halo" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fffbe0"/><stop offset=".45" stop-color="#ffd25a" stop-opacity=".85"/><stop offset="1" stop-color="#ff9a3a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="light" cx=".5" cy=".35" r=".6">
+      <stop offset="0" stop-color="#fff3c8" stop-opacity=".55"/><stop offset="1" stop-color="#fff3c8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lantern" cx=".4" cy=".35" r=".7">
+      <stop offset="0" stop-color="#ff8a5a"/><stop offset=".6" stop-color="#d42a22"/><stop offset="1" stop-color="#7a1010"/>
+    </radialGradient>
+    <radialGradient id="flame" cx=".5" cy=".6" r=".5">
+      <stop offset="0" stop-color="#fffbe0"/><stop offset=".6" stop-color="#ffc23a"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Tường & sàn -->
+  <rect width="400" height="800" fill="url(#wall)"/>
+  <rect y="640" width="400" height="160" fill="url(#floor)"/>
+  <g stroke="#6e2410" stroke-width="1" opacity=".5">
+    <path d="M0 680H400M0 730H400M0 790H400"/>
+    <path d="M200 640V800M120 640L60 800M280 640L340 800M50 640L-40 800M350 640L440 800"/>
+  </g>
+
+  <!-- Khám thờ (vòm) -->
+  <path d="M100 560V250Q100 150 200 140Q300 150 300 250V560Z" fill="#7a1a12" stroke="url(#goldH)" stroke-width="6"/>
+  <path d="M116 560V256Q116 168 200 158Q284 168 284 256V560" fill="none" stroke="#f2b53a" stroke-width="1.5" opacity=".7"/>
+
+  <!-- Hào quang -->
+  <circle cx="200" cy="300" r="150" fill="url(#halo)"/>
+  <circle cx="200" cy="300" r="112" fill="none" stroke="#ffe08a" stroke-width="34" stroke-dasharray="1.5 5" opacity=".55"/>
+  <circle cx="200" cy="248" r="44" fill="#fff6d0" opacity=".9"/>
+  <circle cx="200" cy="248" r="44" fill="none" stroke="#f2b53a" stroke-width="2"/>
+
+  <!-- Tượng Phật -->
+  <g fill="url(#gold)" stroke="#a8701a" stroke-width="1.5">
+    <ellipse cx="200" cy="398" rx="88" ry="28"/>
+    <path d="M156 292Q200 270 244 292L262 384Q200 400 138 384Z"/>
+    <ellipse cx="174" cy="250" rx="5" ry="13"/>
+    <ellipse cx="226" cy="250" rx="5" ry="13"/>
+    <circle cx="200" cy="248" r="25"/>
+    <circle cx="200" cy="219" r="10"/>
+  </g>
+  <path d="M188 252q5 3 10 0M202 252q5 3 10 0" fill="none" stroke="#8a5410" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M195 263q5 3 10 0" fill="none" stroke="#8a5410" stroke-width="1.4" stroke-linecap="round"/>
+  <circle cx="200" cy="241" r="1.6" fill="#d23c2e"/>
+  <path d="M170 300Q200 330 230 300" fill="none" stroke="#c8902a" stroke-width="2"/>
+  <ellipse cx="200" cy="372" rx="24" ry="10" fill="#ffe7a0" stroke="#a8701a" stroke-width="1.2"/>
+
+  <!-- Đài sen -->
+  <g fill="#f7a8c0" stroke="#d8648a" stroke-width="1.5">
+    <ellipse cx="120" cy="430" rx="20" ry="24"/><ellipse cx="146" cy="434" rx="20" ry="24"/>
+    <ellipse cx="173" cy="436" rx="20" ry="24"/><ellipse cx="200" cy="437" rx="20" ry="24"/>
+    <ellipse cx="227" cy="436" rx="20" ry="24"/><ellipse cx="254" cy="434" rx="20" ry="24"/>
+    <ellipse cx="280" cy="430" rx="20" ry="24"/>
+  </g>
+  <rect x="104" y="448" width="192" height="16" rx="4" fill="url(#goldH)"/>
+
+  <!-- Bàn thờ -->
+  <rect x="60" y="500" width="280" height="14" rx="3" fill="url(#goldH)"/>
+  <rect x="72" y="514" width="256" height="126" fill="#9a1e18"/>
+  <rect x="88" y="528" width="104" height="96" fill="none" stroke="#f2b53a" stroke-width="2"/>
+  <rect x="208" y="528" width="104" height="96" fill="none" stroke="#f2b53a" stroke-width="2"/>
+  <circle cx="140" cy="576" r="18" fill="none" stroke="#f2b53a" stroke-width="2"/>
+  <circle cx="260" cy="576" r="18" fill="none" stroke="#f2b53a" stroke-width="2"/>
+
+  <!-- Bát hương & nhang -->
+  <g stroke="#ffcf6a" stroke-width="1.5">
+    <path d="M196 482L192 448M200 482V444M204 482L208 448"/>
+  </g>
+  <g fill="#ff7a2a"><circle cx="192" cy="448" r="2"/><circle cx="200" cy="444" r="2"/><circle cx="208" cy="448" r="2"/></g>
+  <path d="M200 440q-8 -16 4 -30q8 -12 -2 -26" fill="none" stroke="#fff" stroke-width="2" opacity=".35"/>
+  <path d="M172 478H228L222 500H178Z" fill="url(#gold)" stroke="#a8701a"/>
+
+  <!-- Nến -->
+  <g>
+    <rect x="114" y="466" width="12" height="34" fill="#fff4e0"/><ellipse cx="120" cy="458" rx="7" ry="12" fill="url(#flame)"/>
+    <rect x="274" y="466" width="12" height="34" fill="#fff4e0"/><ellipse cx="280" cy="458" rx="7" ry="12" fill="url(#flame)"/>
+  </g>
+
+  <!-- Bình hoa -->
+  <g>
+    <path d="M78 500q-6 -20 4 -30h14q10 10 4 30Z" fill="url(#gold)"/>
+    <circle cx="80" cy="460" r="9" fill="#ec5f92"/><circle cx="96" cy="456" r="9" fill="#ffb3cb"/><circle cx="88" cy="446" r="9" fill="#ec5f92"/>
+    <path d="M300 500q-6 -20 4 -30h14q10 10 4 30Z" fill="url(#gold)"/>
+    <circle cx="304" cy="456" r="9" fill="#ffb3cb"/><circle cx="320" cy="460" r="9" fill="#ec5f92"/><circle cx="312" cy="446" r="9" fill="#ec5f92"/>
+  </g>
+
+  <!-- Cột son & câu đối -->
+  <rect x="0" y="0" width="48" height="800" fill="url(#col)"/>
+  <rect x="352" y="0" width="48" height="800" fill="url(#col)"/>
+  <rect x="-4" y="610" width="56" height="30" fill="url(#goldH)"/><rect x="348" y="610" width="56" height="30" fill="url(#goldH)"/>
+  <g fill="#3a0c08" stroke="#f2b53a" stroke-width="2">
+    <rect x="10" y="170" width="28" height="360" rx="3"/>
+    <rect x="362" y="170" width="28" height="360" rx="3"/>
+  </g>
+  <g fill="#f2b53a" font-family="serif" font-size="20" text-anchor="middle">
+    <text x="24" y="210">福</text><text x="24" y="260">慧</text><text x="24" y="310">雙</text><text x="24" y="360">修</text><text x="24" y="410">德</text><text x="24" y="460">圓</text>
+    <text x="376" y="210">慈</text><text x="376" y="260">悲</text><text x="376" y="310">喜</text><text x="376" y="360">捨</text><text x="376" y="410">普</text><text x="376" y="460">度</text>
+  </g>
+
+  <!-- Xà & hoành phi -->
+  <rect width="400" height="64" fill="#5a0e0a"/>
+  <rect y="58" width="400" height="8" fill="url(#goldH)"/>
+  <path d="M0 22H400M0 40H400" stroke="#f2b53a" stroke-width="1" opacity=".5"/>
+  <rect x="104" y="76" width="192" height="48" rx="4" fill="#3a0c08" stroke="url(#goldH)" stroke-width="5"/>
+  <text x="200" y="110" fill="#ffd970" font-family="serif" font-size="26" text-anchor="middle" letter-spacing="6">大雄寶殿</text>
+
+  <!-- Đèn lồng -->
+  <g>
+    <path d="M72 66V108M328 66V108" stroke="#f2b53a" stroke-width="2"/>
+    <rect x="62" y="106" width="20" height="6" fill="#f2b53a"/><rect x="318" y="106" width="20" height="6" fill="#f2b53a"/>
+    <ellipse cx="72" cy="140" rx="24" ry="30" fill="url(#lantern)"/><ellipse cx="328" cy="140" rx="24" ry="30" fill="url(#lantern)"/>
+    <path d="M72 112V168M60 116Q52 140 60 164M84 116Q92 140 84 164M328 112V168M316 116Q308 140 316 164M340 116Q348 140 340 164" fill="none" stroke="#ffcf6a" stroke-width="1" opacity=".6"/>
+    <rect x="62" y="168" width="20" height="6" fill="#f2b53a"/><rect x="318" y="168" width="20" height="6" fill="#f2b53a"/>
+    <path d="M72 174V200M328 174V200" stroke="#ffcf6a" stroke-width="3"/>
+  </g>
+
+  <!-- Ánh sáng tổng -->
+  <rect width="400" height="800" fill="url(#light)"/>
+</svg>

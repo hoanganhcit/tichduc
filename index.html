@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gõ Mõ Online — Tích Đức</title>
+<meta name="description" content="Gõ mõ online miễn phí ngay trên trình duyệt. Mỗi nhịp gõ là một niệm an, tích công đức và tiến qua 9 cảnh giới.">
+<meta name="theme-color" content="#fffaf2">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tích Đức">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,600;0,700;1,500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="home">
+<div id="splash" class="splash">
+  <div class="splash-lotus">🪷</div>
+  <p class="splash-text">Mỗi nhịp gõ, một niệm an.</p>
+</div>
+
+<header class="appbar">
+  <div class="brand"><span class="brand-mark">卍</span>Tích Đức</div>
+  <div class="appbar-actions">
+    <button class="chip" data-go="lich" aria-label="Xem lịch âm"><span>🌙</span><b id="chip-date"></b></button>
+    <button class="icon-btn" id="btn-music" aria-label="Bật/tắt nhạc thiền" aria-pressed="false"><i>🎶</i></button>
+    <button class="icon-btn" id="btn-sound" aria-label="Bật/tắt âm thanh"><i>🔊</i></button>
+  </div>
+</header>
+
+<main>
+  <!-- ===== GÕ MÕ ===== -->
+  <section class="view" id="view-home">
+    <div class="merit">
+      <div class="merit-label">Công đức</div>
+      <div class="merit-num" id="s-merit">0</div>
+      <div class="merit-meta"><span class="realm-badge" id="s-realm">Sơ tâm</span><span id="s-mult">x1 mỗi nhịp</span></div>
+    </div>
+
+    <div class="stage">
+      <div class="ring" id="s-bar" style="--p:0"></div>
+      <div class="mo-wrap">
+        <button class="mo" id="mo" aria-label="Gõ mõ">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <defs>
+              <radialGradient id="gM" cx=".42" cy=".32" r=".7"><stop offset="0" stop-color="#ff9a6a"/><stop offset=".55" stop-color="#d23c2e"/><stop offset="1" stop-color="#8a1a18"/></radialGradient>
+              <radialGradient id="gHole" cx=".5" cy=".3" r=".7"><stop offset="0" stop-color="#4a0c0c"/><stop offset="1" stop-color="#8a1a18"/></radialGradient>
+            </defs>
+            <ellipse cx="100" cy="184" rx="66" ry="8" fill="rgba(160,60,20,.18)"/>
+            <ellipse id="mo-body" cx="100" cy="108" rx="86" ry="72" fill="url(#gM)" stroke="#f2b53a" stroke-width="4"/>
+            <path class="mo-line" d="M30 118 Q100 150 170 118" fill="none" stroke="#ffd970" stroke-width="3" opacity=".7"/>
+            <path d="M44 132 Q100 168 156 132 Q100 150 44 132Z" fill="url(#gHole)"/>
+            <path class="mo-line" d="M70 88 q8 -8 16 0 M114 88 q8 -8 16 0 M88 108 q12 10 24 0" fill="none" stroke="#ffe39a" stroke-width="4" stroke-linecap="round"/>
+            <ellipse cx="72" cy="70" rx="24" ry="12" fill="rgba(255,255,255,.28)" transform="rotate(-20 72 70)"/>
+          </svg>
+        </button>
+        <svg class="dui" id="dui" viewBox="0 0 80 240" aria-hidden="true">
+          <defs>
+            <linearGradient id="gH" x1="0" x2="1"><stop offset="0" stop-color="#e0b07a"/><stop offset=".5" stop-color="#b07a46"/><stop offset="1" stop-color="#7a4a22"/></linearGradient>
+            <radialGradient id="gD" cx=".4" cy=".35" r=".6"><stop offset="0" stop-color="#f0c890"/><stop offset="1" stop-color="#8a5428"/></radialGradient>
+          </defs>
+          <rect x="33" y="80" width="14" height="150" rx="7" fill="url(#gH)"/>
+          <ellipse cx="40" cy="50" rx="30" ry="36" fill="url(#gD)"/>
+        </svg>
+        <div class="float-layer" id="float-layer"></div>
+      </div>
+    </div>
+    <p class="next" id="s-next">0 / 100 → Định tâm</p>
+
+    <div class="quick">
+      <button class="q-btn" id="btn-bell"><span>🔔</span>Thỉnh chuông</button>
+      <button class="q-btn" id="btn-share"><span>📤</span>Khoe</button>
+      <button class="q-btn" data-open="modal-hoihuong"><span>🙏</span>Hồi hướng</button>
+      <button class="q-btn" data-open="modal-skin"><span>🪘</span>Đổi mõ</button>
+    </div>
+
+    <div class="today">
+      <div><small>Hôm nay</small><b id="s-today">0</b> nhịp</div>
+      <div class="sep"></div>
+      <div><small>Chuỗi</small><b>🔥 <span id="st-count">1</span></b> ngày</div>
+    </div>
+    <a class="temple-card" href="chua.html">
+      <span>🛕</span>
+      <div><b>Vào chính điện 3D</b><small>Thắp hương, vái lạy và gửi lời nguyện</small></div>
+      <i>›</i>
+    </a>
+    <div class="live" id="live" hidden>
+      <div class="live-stats"><span class="dot"></span><b id="live-online">0</b> đạo hữu đang tích đức · <b id="live-taps">0</b> tiếng gõ hôm nay</div>
+      <div class="ticker"><div class="ticker-track" id="live-events"></div></div>
+    </div>
+    <p class="tip">Chạm vào mõ hoặc nhấn <kbd>Space</kbd></p>
+  </section>
+
+  <!-- ===== LỊCH ===== -->
+  <section class="view" id="view-lich" hidden>
+    <h2 class="view-title">Lịch âm hôm nay</h2>
+    <div class="cal">
+      <div class="cal-solar" id="cal-solar"></div>
+      <div class="cal-day" id="cal-day"></div>
+      <div class="cal-month" id="lich-am"></div>
+      <div class="cal-status" id="lich-sub"></div>
+    </div>
+    <div class="panel" id="lich-body"></div>
+    <button class="btn-primary" data-open="modal-quote">🪷 Lời hay hôm nay</button>
+  </section>
+
+  <!-- ===== QUẺ ===== -->
+  <section class="view" id="view-que" hidden>
+    <h2 class="view-title">Rút quẻ hôm nay</h2>
+    <div class="panel center" id="f-body">
+      <div class="ong-que" id="ong-que">🏺</div>
+      <p class="muted">Tĩnh tâm, nghĩ về điều mình đang băn khoăn rồi rút một quẻ.</p>
+      <button class="btn-primary" id="btn-draw">Rút quẻ</button>
+    </div>
+  </section>
+
+  <!-- ===== BẢNG XẾP HẠNG ===== -->
+  <section class="view" id="view-bxh" hidden>
+    <h2 class="view-title">Bảng xếp hạng</h2>
+    <div class="seg" role="tablist">
+      <button data-lb="today" class="on">Hôm nay</button>
+      <button data-lb="all">Tất cả</button>
+      <button data-lb="province">Tỉnh thành</button>
+    </div>
+    <button class="panel me-card" id="lb-me" data-open="modal-profile"></button>
+    <ol class="lb" id="lb-list"><li class="muted">Đang tải…</li></ol>
+  </section>
+
+  <!-- ===== HÀNH TRÌNH ===== -->
+  <section class="view" id="view-tu" hidden>
+    <h2 class="view-title">Hành trình tu tập</h2>
+    <div class="stat-grid">
+      <div class="stat"><small>Lần gõ</small><b id="s-taps">0</b></div>
+      <div class="stat"><small>Thời gian</small><b id="s-time">0s</b></div>
+    </div>
+    <div class="panel streak">
+      <span class="streak-icon">🔥</span>
+      <div><b id="st-days">1 ngày tinh tấn</b><small id="st-next"></small></div>
+    </div>
+    <button class="panel profile-row" data-open="modal-profile"><span>👤</span><div><b id="pf-name">Chưa đặt pháp danh</b><small>Hồ sơ, tỉnh thành &amp; mã khôi phục</small></div><i>›</i></button>
+    <h3 class="sub-title">Chín cảnh giới</h3>
+    <ol class="timeline" id="realm-list"></ol>
+    <details class="panel faq">
+      <summary>Gõ mõ online là gì?</summary>
+      <p>Gõ mõ là dùng dùi gõ vào mõ (mộc ngư) theo nhịp để giữ nhịp tụng niệm và nuôi chánh niệm. Trang này giúp bạn dành vài phút mỗi ngày để tĩnh tâm ngay trên trình duyệt, không cần tải app hay đăng ký.</p>
+      <p>Mỗi nhịp gõ cộng công đức theo hệ số cảnh giới. Công cụ chỉ là phương tiện, công đức thật đến từ tâm thành.</p>
+    </details>
+    <p class="tip">Tiến trình được lưu trên trình duyệt của bạn.</p>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button data-go="home" class="active"><i>🪘</i>Gõ mõ</button>
+  <button data-go="lich"><i>🌙</i>Lịch</button>
+  <button data-go="que"><i>🎴</i>Quẻ</button>
+  <button data-go="bxh"><i>🏆</i>BXH</button>
+  <button data-go="tu"><i>📿</i>Hành trình</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="modal-quote" hidden>
+  <div class="sheet">
+    <button class="x" data-close aria-label="Đóng">✕</button>
+    <div class="sheet-icon">🪷</div>
+    <p class="muted small" id="q-date"></p>
+    <blockquote id="q-text"></blockquote>
+    <cite id="q-src"></cite>
+    <span class="pill" id="q-streak"></span>
+    <button class="btn-primary" data-close>🙏 Bắt đầu gõ mõ</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-hoihuong" hidden>
+  <div class="sheet">
+    <button class="x" data-close aria-label="Đóng">✕</button>
+    <div class="sheet-icon">🙏</div>
+    <h3 class="sheet-title">Hồi hướng công đức</h3>
+    <p class="verse">Nguyện đem công đức này<br>Hướng về khắp tất cả<br>Đệ tử và chúng sinh<br>Đều trọn thành Phật đạo.</p>
+    <input id="hh-name" maxlength="40" placeholder="Hồi hướng cho ai? (tuỳ chọn)">
+    <button class="btn-primary" id="btn-hh">Hồi hướng</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-skin" hidden>
+  <div class="sheet">
+    <button class="x" data-close aria-label="Đóng">✕</button>
+    <h3 class="sheet-title">Mõ &amp; Cửa hàng</h3>
+    <p class="muted small">Lên cảnh giới để mở khoá mõ, hoặc mở ngay trong cửa hàng. Mỗi loại có tiếng gõ riêng.</p>
+    <div class="member-box" id="member-box" hidden></div>
+    <div class="skin-grid" id="skin-grid"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-pay" hidden>
+  <div class="sheet">
+    <button class="x" data-close aria-label="Đóng">✕</button>
+    <h3 class="sheet-title">Thanh toán</h3>
+    <p class="muted small"><b id="pay-name"></b> · <b class="pay-amount" id="pay-amount"></b></p>
+    <img class="pay-qr" id="pay-qr" alt="Mã VietQR chuyển khoản" width="220" height="220">
+    <p class="muted small">Mở app ngân hàng, quét mã QR. Số tiền và nội dung đã điền sẵn.</p>
+    <dl class="pay-info">
+      <dt>Ngân hàng</dt><dd id="pay-bank"></dd>
+      <dt>Số tài khoản</dt><dd><span id="pay-acc"></span> <button class="btn-mini" data-copy="pay-acc">Chép</button></dd>
+      <dt>Chủ tài khoản</dt><dd id="pay-holder"></dd>
+      <dt>Nội dung CK</dt><dd><b id="pay-code"></b> <button class="btn-mini" data-copy="pay-code">Chép</button></dd>
+    </dl>
+    <div class="pay-status" id="pay-status"></div>
+    <small id="pay-timer"></small>
+    <button class="btn-mini" id="pay-test" hidden>🧪 Giả lập đã chuyển khoản (chế độ thử)</button>
+    <p class="note">Ghi đúng <b>nội dung chuyển khoản</b> để hệ thống tự mở khoá. Vật phẩm là đồ trang trí, không cộng công đức và không hoàn tiền.</p>
+  </div>
+</div>
+
+<div class="modal" id="modal-profile" hidden>
+  <div class="sheet">
+    <button class="x" data-close aria-label="Đóng">✕</button>
+    <h3 class="sheet-title">Hồ sơ tu tập</h3>
+    <label class="field">Pháp danh<input id="pf-input" maxlength="24" placeholder="VD: Diệu Tâm"></label>
+    <label class="field">Tỉnh thành<select id="pf-province"><option value="">— Chọn tỉnh thành —</option></select></label>
+    <button class="btn-primary" id="btn-profile">Lưu hồ sơ</button>
+    <div class="recover">
+      <small>Mã khôi phục — lưu lại để dùng tiến trình trên máy khác</small>
+      <div class="code-row"><code id="pf-code">Chưa có</code><button class="btn-mini" id="btn-copy">Sao chép</button></div>
+      <div class="code-row"><input id="rs-input" maxlength="12" placeholder="Nhập mã để khôi phục"><button class="btn-mini" id="btn-restore">Khôi phục</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
