@@ -142,7 +142,7 @@ const ACTIONS = new Set(['light', 'bow', 'plant', 'emote', 'kneel', 'stand', 'mo
 const EMOTES = ['🙏', '🪷', '❤️', '☸️'];
 const SUTRA_COUNT = 8;                // số câu kinh trong SUTRA ở chua.js — client gửi số thứ tự, không gửi chữ tự do
 // Dâng lễ miễn phí nhưng có thời gian chờ, điểm cộng vào Bảng Công Đức của phòng
-const OFFERINGS = { hoa: { pts: 1, cd: 3e3 }, huong: { pts: 5, cd: 10e3 }, sen: { pts: 20, cd: 30e3 }, chuong: { pts: 99, cd: 60e3 } };
+const OFFERINGS = { hoa: { pts: 1, cd: 3e3 }, huong: { pts: 3, cd: 8e3 }, sen: { pts: 9, cd: 20e3 }, chuong: { pts: 27, cd: 45e3 } };
 const boardTop = (room) => [...room.board.values()].sort((a, b) => b.pts - a.pts).slice(0, 10);
 const rooms = [];                     // { id, members: Map(pid → member), incense: [] }
 const members = new Map();

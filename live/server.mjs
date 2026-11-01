@@ -1,7 +1,6 @@
 // Bộ phát TikTok LIVE cho chính điện 3D. Chạy trên máy phát: cd live && npm install && npm start
 // Người xem bình luận → vào quỳ ở chính điện; tặng quà → dâng lễ, xướng tên hồi hướng; thả tim → ❤️.
 // Màn hình phát: /chua.html?live (cảnh 3D 9:16). Bảng điều khiển: /live/control.html
-// Ý tưởng và phần kết nối TikTok dựa trên dự án chanh-dien-online (MIT, © 2026 Kent Juno).
 //
 // An toàn: chỉ nghe 127.0.0.1; header Host phải là localhost (chống DNS rebinding); lệnh POST phải đến từ
 // chính trang này (kiểm tra Origin); chỉ phục vụ vài file trong danh sách trắng. Không dùng tài khoản TikTok —
@@ -20,16 +19,18 @@ const HOST = process.env.HOST || '127.0.0.1';
 const SLOTS = [];
 for (const z of [-0.9, 0.5, 1.9, 3.3]) for (const x of [0, -1.2, 1.2, -2.4, 2.4]) SLOTS.push({ x, z });
 
-// Bình luận đúng một từ khoá thì đổi hình nhân vật ("Nam mô A Di Đà Phật" không bị hiểu là "nam")
-const LOOKS = {
-  'nam': { gender: 'nam', hair: 'ngan', outfit: 'lam' },
-  'nữ': { gender: 'nu', hair: 'dai', outfit: 'lam' },
-  'nu': { gender: 'nu', hair: 'dai', outfit: 'lam' },
-  'sư': { gender: 'nam', hair: 'troc', outfit: 'nau' },
-  'ni': { gender: 'nu', hair: 'troc', outfit: 'xam' },
-  'tiểu': { gender: 'nam', hair: 'troc', outfit: 'xam' },
-  'bà': { gender: 'nu', hair: 'bui', outfit: 'nau' },
+// Thẻ # trong bình luận để tự chọn dáng, ghép được nhiều thẻ: "#nữ #búi #nâu"
+const TAGS = {
+  nam: { gender: 'nam' }, nu: { gender: 'nu' },
+  troc: { hair: 'troc' }, ngan: { hair: 'ngan' }, bui: { hair: 'bui' }, dai: { hair: 'dai' },
+  lam: { outfit: 'lam' }, nau: { outfit: 'nau' }, xam: { outfit: 'xam' },
 };
+const unaccent = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase();
+function readTags(text) {
+  const look = {};
+  for (const [, t] of String(text).matchAll(/#([\p{L}]+)/gu)) Object.assign(look, TAGS[unaccent(t)]);
+  return look;
+}
 const PRAYERS = ['gia đình bình an', 'cha mẹ mạnh khỏe', 'mọi người an lạc', 'chúng sinh thoát khổ', 'tâm luôn thanh tịnh'];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const clean = (s, n) => String(s ?? '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
@@ -72,10 +73,10 @@ function seat(id, name) {
   let m = members.get(id);
   if (m) { m.lastActive = now; return m; }
   if (members.size >= SLOTS.length) {
-    // Đầy chỗ: người im lặng lâu nhất mà chưa dâng lễ nhường chỗ
-    const quiet = [...members.values()].filter((x) => !x.coins).sort((a, b) => a.lastActive - b.lastActive)[0];
-    if (!quiet) return null;
-    unseat(quiet.id);
+    // Đầy chỗ: mời người có ít điểm nhất rời đi (bằng điểm thì ai ít hoạt động gần đây hơn)
+    const out = [...members.values()].sort((a, b) => a.coins - b.coins || a.lastActive - b.lastActive)[0];
+    if (out.coins >= 27) return null;            // ai cũng đã thỉnh chuông trở lên: giữ nguyên chỗ
+    unseat(out.id);
   }
   const used = new Set([...members.values()].map((x) => x.slot));
   let slot = 0; while (used.has(slot)) slot++;
@@ -109,12 +110,13 @@ function onChat(id, name, text) {
   if (!m) return;
   text = clean(text, 80);
   if (!text) return;
-  const look = LOOKS[text.toLowerCase().replace(/[.!?]+$/, '')];
-  if (look) {                                    // đổi hình: rời rồi vào lại với dáng mới
+  const look = readTags(text);
+  if (Object.keys(look).length) {                // có thẻ #: đổi dáng bằng cách rời rồi vào lại
     m.profile = { ...m.profile, ...look };
     send('leave', { pid: m.pid });
     setTimeout(() => walkIn(m), 700);
-    return;
+    text = clean(text.replace(/#[\p{L}]+/gu, ''), 80);
+    if (!text) return;
   }
   m.prayer = text;
   send('act', { pid: m.pid, type: 'say', name: m.profile.name, text });
@@ -128,9 +130,10 @@ function onGift(id, name, giftName, count, diamonds) {
   const coins = Math.max(1, Number(diamonds) || 1) * count;
   m.coins += coins;
   board.set(m.pid, { name: m.profile.name, pts: m.coins });
-  const kind = coins >= 99 ? 'chuong' : coins >= 20 ? 'sen' : coins >= 5 ? 'huong' : 'hoa';
-  const prayer = settings.readPrayer && m.prayer ? m.prayer : `Nguyện cầu ${pick(PRAYERS)}`;
-  const line = `Nam mô A Di Đà Phật. Phật tử ${m.profile.name} thành tâm dâng ${giftName}${count > 1 ? `, ${count} lần` : ''}. ${prayer}.`;
+  // Bậc lễ theo giá trị quà, cùng thang điểm với thanh dâng lễ trong chua.js
+  const kind = coins >= 27 ? 'chuong' : coins >= 9 ? 'sen' : coins >= 3 ? 'huong' : 'hoa';
+  const wish = settings.readPrayer && m.prayer ? m.prayer : `Nguyện ${pick(PRAYERS)}`;
+  const line = `Tích Đức xin ghi nhận đạo hữu ${m.profile.name} đã gửi ${count > 1 ? `${count} ` : ''}${giftName}. ${wish}. Công đức vô lượng.`;
   send('act', { pid: m.pid, type: 'offer', kind, name: m.profile.name, board: boardTop(),
     gift: { name: count > 1 ? `${giftName} ×${count}` : giftName, line: settings.tts ? line : '' } });
   log(`🎁 ${m.profile.name} tặng ${giftName} ×${count} (${coins} xu)`);
@@ -153,24 +156,27 @@ async function connectTikTok(uniqueId) {
   tiktokState = { status: 'connecting', uniqueId, error: '' }; status();
   try {
     TikTokLib ||= await import('tiktok-live-connector');
-    const { TikTokLiveConnection, WebcastEvent, ControlEvent } = TikTokLib;
-    const conn = new TikTokLiveConnection(uniqueId, { enableExtendedGiftInfo: true, processInitialData: false });
-    const nm = (u) => u?.nickname || u?.uniqueId || 'ẩn danh';
-    const uid = (u) => u?.uniqueId || u?.userId;
-    conn.on(WebcastEvent.CHAT, (d) => onChat(uid(d.user), nm(d.user), d.comment));
-    conn.on(WebcastEvent.GIFT, (d) => {
-      const type = d.giftDetails?.giftType ?? d.extendedGiftInfo?.type;
-      if (type === 1 && !d.repeatEnd) return;     // quà combo còn đang chạy: chờ kết thúc mới tính
-      onGift(uid(d.user), nm(d.user), d.giftDetails?.giftName || d.extendedGiftInfo?.name, d.repeatCount || 1,
-        d.giftDetails?.diamondCount ?? d.extendedGiftInfo?.diamond_count ?? 1);
-    });
-    conn.on(WebcastEvent.MEMBER, (d) => { if (settings.joinOnEnter) seat(uid(d.user), nm(d.user)); });
-    conn.on(WebcastEvent.LIKE, (d) => onLike(uid(d.user)));
-    conn.on(ControlEvent.DISCONNECTED, () => { tiktokState = { ...tiktokState, status: 'disconnected' }; status(); log('TikTok: mất kết nối'); });
-    conn.on(ControlEvent.ERROR, (e) => log('TikTok lỗi: ' + (e?.info || e?.message || e)));
-    const st = await conn.connect();
-    tiktok = conn;
-    tiktokState = { status: 'connected', uniqueId, error: '', roomId: st?.roomId || '' };
+    const { TikTokLiveConnection: Live, WebcastEvent: E, ControlEvent: C } = TikTokLib;
+    const live = new Live(uniqueId, { enableExtendedGiftInfo: true, processInitialData: false });
+    // Rút gọn thông tin người xem từ mỗi sự kiện
+    const who = (d) => { const u = d?.user || {}; return { id: u.uniqueId || u.userId, name: u.nickname || u.uniqueId || 'ẩn danh' }; };
+    const gift = (d) => {
+      const info = { ...(d.extendedGiftInfo || {}), ...(d.giftDetails || {}) };
+      const streakRunning = (info.giftType ?? info.type) === 1 && !d.repeatEnd;   // quà combo: đợi combo xong mới tính một lần
+      return streakRunning ? null : { title: info.giftName || info.name, value: info.diamondCount ?? info.diamond_count ?? 1, times: d.repeatCount || 1 };
+    };
+    const handlers = {
+      [E.CHAT]: (d) => { const u = who(d); onChat(u.id, u.name, d.comment); },
+      [E.GIFT]: (d) => { const g = gift(d), u = who(d); if (g) onGift(u.id, u.name, g.title, g.times, g.value); },
+      [E.LIKE]: (d) => onLike(who(d).id),
+      [E.MEMBER]: (d) => { if (settings.joinOnEnter) { const u = who(d); seat(u.id, u.name); } },
+      [C.DISCONNECTED]: () => { tiktokState = { ...tiktokState, status: 'disconnected' }; status(); log('TikTok: mất kết nối'); },
+      [C.ERROR]: (err) => log('TikTok lỗi: ' + (err?.info || err?.message || err)),
+    };
+    for (const [event, fn] of Object.entries(handlers)) live.on(event, fn);
+    const room = await live.connect();
+    tiktok = live;
+    tiktokState = { status: 'connected', uniqueId, error: '', roomId: room?.roomId || '' };
     log(`✅ Đã kết nối live @${uniqueId}`);
   } catch (e) {
     tiktokState = { status: 'error', uniqueId, error: String(e?.message || e).slice(0, 200) };
@@ -184,9 +190,10 @@ async function disconnectTikTok() {
 }
 
 /* ===== Người mô phỏng để thử khi chưa live ===== */
-const DEMO = ['Diệu Hạnh', 'Minh Tâm', 'Thiện Đức', 'Huệ An', 'Tịnh Nhã', 'Quảng Trí', 'Chơn Như', 'Pháp Hỷ', 'Nguyên Thanh', 'Tâm Đăng',
-  'Diệu Liên', 'Trí Hải', 'Phước Lộc', 'Hạnh Nguyện', 'Như Ý', 'Bảo Châu', 'Thanh Lương', 'Từ Tâm', 'An Lạc', 'Giác Hoa'];
-const CHANTS = ['Nam mô A Di Đà Phật', 'Nam mô Quán Thế Âm Bồ Tát', 'Con nguyện cầu cho gia đình bình an', 'Cầu cho mẹ mau khỏe'];
+const DEMO = ['An Nhiên', 'Bảo Ngọc', 'Gia Huy', 'Hải Đăng', 'Khánh Linh', 'Lan Anh', 'Minh Khôi', 'Ngọc Hân', 'Phúc An', 'Quốc Bảo',
+  'Thảo Vy', 'Thu Hà', 'Tuấn Kiệt', 'Vân Khánh', 'Yến Nhi', 'Đức Trí', 'Hoài Nam', 'Mai Chi', 'Nhật Minh', 'Thanh Tú'];
+const CHANTS = ['A Di Đà Phật', 'Con xin cho cả nhà mạnh khỏe', 'Chúc mọi người một ngày an yên', 'Nguyện thi cử thuận lợi #nữ #búi',
+  'Mong công việc hanh thông #nâu', 'Xin bình an cho ông bà'];
 let botTimer = null;
 function fill(n) {
   for (let i = 0; i < n; i++) { const name = pick(DEMO); seat('bot_' + crypto.randomBytes(3).toString('hex'), name); }
@@ -196,7 +203,7 @@ function botTick() {
   if (!all.length) return fill(3);
   const m = pick(all);
   const r = Math.random();
-  if (r < 0.25) onGift(m.id, m.profile.name, pick(['Hoa hồng', 'Nhang', 'Hoa sen', 'Chuông vàng']), 1, pick([1, 1, 5, 20, 99]));
+  if (r < 0.25) onGift(m.id, m.profile.name, pick(['Hoa hồng', 'Nhang', 'Hoa sen', 'Chuông vàng']), 1, pick([1, 1, 3, 9, 27]));
   else if (r < 0.75) onChat(m.id, m.profile.name, pick(CHANTS));
   else onLike(m.id);
 }

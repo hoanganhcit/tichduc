@@ -614,16 +614,16 @@ async function gotoCushion() {
   await kneelDown(me);
 }
 
-/* ===== Tụng kinh, dâng lễ, giọng đọc — ý tưởng từ dự án chanh-dien-online (MIT, © 2026 Kent Juno) ===== */
+/* ===== Tụng kinh, dâng lễ, giọng đọc ===== */
 // Thứ tự câu kinh phải khớp SUTRA_COUNT ở máy chủ: mạng chỉ gửi số thứ tự, không gửi chữ tự do
 const SUTRA = ['Nam mô A Di Đà Phật', 'Nam mô Bổn Sư Thích Ca Mâu Ni Phật', 'Nam mô Đại Bi Quán Thế Âm Bồ Tát',
-  'Nam mô Đại Thế Chí Bồ Tát', 'Nam mô Địa Tạng Vương Bồ Tát', 'Nguyện cầu bình an cho gia đình',
-  'Cầu cho cha mẹ được mạnh khỏe', 'Nguyện đem công đức này hướng về khắp tất cả'];
+  'Nam mô Đại Thế Chí Bồ Tát', 'Nam mô Địa Tạng Vương Bồ Tát', 'Nguyện gia đạo an vui',
+  'Nguyện cha mẹ thân tâm an lạc', 'Nguyện đem công đức này hướng về khắp tất cả'];
 const OFFER = {
   hoa:    { icon: '🌸', label: 'hoa', pts: 1, cd: 3 },
-  huong:  { icon: '🪔', label: 'hương', pts: 5, cd: 10 },
-  sen:    { icon: '🪷', label: 'hoa sen', pts: 20, cd: 30 },
-  chuong: { icon: '🔔', label: 'chuông', pts: 99, cd: 60 },
+  huong:  { icon: '🪔', label: 'hương', pts: 3, cd: 8 },
+  sen:    { icon: '🪷', label: 'hoa sen', pts: 9, cd: 20 },
+  chuong: { icon: '🔔', label: 'chuông', pts: 27, cd: 45 },
 };
 const PRAYERS = ['gia đình bình an', 'cha mẹ mạnh khỏe', 'mọi người an lạc', 'chúng sinh thoát khổ', 'tâm luôn thanh tịnh'];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -689,7 +689,7 @@ let chanting = false, mokTimer = null, bellTimer = null, sutraIdx = 0;
 function startAmbient() {
   if (chanting) return;
   chanting = true; bell(0.5);
-  mokTimer = setInterval(mok, 1150); bellTimer = setInterval(() => bell(0.5), 45e3);
+  mokTimer = setInterval(mok, 1250); bellTimer = setInterval(() => bell(0.5), 50e3);
 }
 function stopAmbient() { chanting = false; clearInterval(mokTimer); clearInterval(bellTimer); }
 
@@ -721,7 +721,7 @@ async function startChantMode() {
   stepChant();
 }
 function stepChant() {
-  panel('TỤNG KINH', 'Đang tụng kinh', 'Mõ tự gõ theo nhịp, chuông ngân mỗi 45 giây. Chạm "Niệm" để niệm một câu cùng mọi người.',
+  panel('TỤNG KINH', 'Đang tụng kinh', 'Mõ tự gõ theo nhịp, chuông ngân mỗi 50 giây. Chạm "Niệm" để niệm một câu cùng mọi người.',
     `<button class="btn" id="a-niem">📿 Niệm: ${SUTRA[sutraIdx]}</button>
      <div class="row"><button class="btn ghost" id="a-ritual">🪔 Dâng hương</button><button class="btn ghost" id="a-up">Đứng dậy</button></div>`);
   $('a-niem').onclick = () => {
@@ -783,9 +783,9 @@ function fx(kind, actor) {
 function doOffer(actor, kind, name, gift) {
   const o = OFFER[kind], what = gift?.name || o.label;
   fx(kind, actor);
-  feed(name, `thành tâm dâng ${what} ${o.icon}`, true);
+  feed(name, `dâng ${what} ${o.icon}`, true);
   if (o.pts >= 20 || gift) banner(`${o.icon} ${name} dâng ${what}`);
-  speak(gift?.line || `Nam mô A Di Đà Phật. Phật tử ${name} thành tâm dâng ${o.label}. Nguyện cầu ${pick(PRAYERS)}.`);
+  speak(gift?.line || `Tích Đức xin ghi nhận đạo hữu ${name} đã dâng ${o.label}. Nguyện ${pick(PRAYERS)}. Công đức vô lượng.`);
 }
 let localPts = 0;
 $('offers').addEventListener('click', async (e) => {
@@ -879,7 +879,7 @@ $('btn-enter').onclick = async () => {
   await arrived(me);
   me.free = true;
   $('emotes').hidden = false; $('offers').hidden = false;
-  feed(profile.name, 'đã vào chánh điện');
+  feed(profile.name, 'đã vào chính điện');
   stepFree();
   $('hint').textContent = 'WASD / mũi tên hoặc chạm sàn để đi · kéo để xoay';
   $('hint').style.opacity = 1;
@@ -922,8 +922,8 @@ function listen(url) {
     const m = JSON.parse(e.data);
     if (remotes.has(m.pid)) return;
     addRemote(m, true); updatePeople();
-    feed(m.name, 'đã vào chánh điện');
-    speak(`Hoan nghênh ${m.name} vào chánh điện`);
+    feed(m.name, 'đã vào chính điện');
+    speak(`Chào mừng đạo hữu ${m.name} đến chính điện`);
   });
   es.addEventListener('leave', (e) => { removeRemote(JSON.parse(e.data).pid); updatePeople(); });
   es.addEventListener('act', (e) => onRemoteAct(JSON.parse(e.data)));

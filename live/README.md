@@ -2,8 +2,6 @@
 
 Chạy trên **máy phát** (máy tính bạn dùng để livestream). Người xem bình luận là vào quỳ trong chính điện 3D, tặng quà được xướng tên hồi hướng, thả tim thì tim bay trên đầu nhân vật.
 
-Ý tưởng và phần kết nối TikTok dựa trên dự án **Chánh Điện Tịnh Tâm / chanh-dien-online** (giấy phép MIT, © 2026 Kent Juno).
-
 ## Chạy
 
 Cần Node.js 20 trở lên và Internet (cảnh 3D tải thư viện Three.js từ jsDelivr).
@@ -17,15 +15,15 @@ cd live && npm install && npm start
 3. TikTok LIVE Studio: *Add source → Window capture* → chọn cửa sổ chính điện. OBS: *Browser source* trỏ tới `http://localhost:3000/chua.html?live`, kích thước 1080×1920.
 4. Bật LIVE, nhập `@username` vào bảng điều khiển, bấm **Kết nối**.
 
-Chưa live vẫn thử được bằng mục **Thử khi chưa live**: gửi bình luận, tặng quà 1/5/20/99 xu, đổ 5/10/20 người mẫu, bật người mô phỏng.
+Chưa live vẫn thử được bằng mục **Thử khi chưa live**: gửi bình luận, tặng quà 1/3/9/27 xu, đổ 5/10/20 người mẫu, bật người mô phỏng.
 
 ## Người xem làm được gì
 
 | Hành động | Trong chính điện |
 |---|---|
-| Bình luận bất kỳ | Vào từ cửa, đi tới đệm và quỳ (20 chỗ). Câu bình luận nổi trên đầu, nhân vật cúi lạy. Đầy chỗ thì người im lặng lâu nhất mà chưa tặng quà nhường chỗ. |
-| Bình luận đúng một từ `nam`, `nữ`, `sư`, `ni`, `tiểu`, `bà` | Đổi hình nhân vật |
-| Tặng quà | Dâng lễ theo giá trị quà: 1 xu hoa, 5+ hương, 20+ hoa sen, 99+ chuông. Banner xướng tên, giọng đọc hồi hướng (lấy lời nguyện từ bình luận gần nhất nếu bật), cộng điểm Bảng Công Đức |
+| Bình luận bất kỳ | Vào từ cửa, đi tới đệm và quỳ (20 chỗ). Câu bình luận nổi trên đầu, nhân vật cúi lạy. Đầy chỗ thì người ít điểm nhất (bằng điểm thì ít hoạt động hơn) nhường chỗ; ai đã đạt từ 27 điểm được giữ chỗ. |
+| Thêm thẻ `#nam` `#nữ`, `#trọc` `#ngắn` `#búi` `#dài`, `#lam` `#nâu` `#xám` vào bình luận (VD "Chúc cả nhà an yên #nữ #búi") | Chọn dáng nhân vật, ghép được nhiều thẻ |
+| Tặng quà | Dâng lễ theo giá trị quà: 1 xu hoa, 3+ hương, 9+ hoa sen, 27+ chuông. Banner xướng tên, giọng đọc hồi hướng (lấy lời nguyện từ bình luận gần nhất nếu bật), cộng điểm Bảng Công Đức |
 | Thả tim | ❤️ bay trên đầu nhân vật (tối đa 1 lần / 3 giây mỗi người) |
 
 Giọng đọc dùng giọng tiếng Việt có sẵn của trình duyệt. Microsoft Edge trên Windows có giọng tự nhiên (Hoài My, Nam Minh), nên mở màn hình phát bằng Edge rồi dùng *Window capture*. Browser source của OBS thường không có giọng tiếng Việt.
