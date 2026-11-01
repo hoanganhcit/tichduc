@@ -1,5 +1,5 @@
 // Service worker: cache tĩnh để dùng offline. Đổi VERSION khi cập nhật file.
-const VERSION = 'tichduc-v9';
+const VERSION = 'tichduc-v10';
 const ASSETS = ['./', 'index.html', 'styles.css', 'game.js', 'chua.html', 'chua.js', 'avatar.js', 'bg-chinh-dien.png', 'icon.svg', 'manifest.json'];
 
 self.addEventListener('install', (e) => {

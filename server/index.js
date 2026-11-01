@@ -138,8 +138,12 @@ const routes = {
 /* ===== Chính điện nhiều người: Server-Sent Events để phát, POST để gửi hành động ===== */
 const ROOM_SIZE = 20;                 // bằng số đệm quỳ trong cảnh 3D; đầy thì mở phòng mới
 const AV = { gender: ['nam', 'nu'], hair: ['troc', 'ngan', 'bui', 'dai'], outfit: ['lam', 'nau', 'xam'] };
-const ACTIONS = new Set(['light', 'bow', 'plant', 'emote', 'kneel', 'stand', 'move']);
+const ACTIONS = new Set(['light', 'bow', 'plant', 'emote', 'kneel', 'stand', 'move', 'chant', 'offer']);
 const EMOTES = ['🙏', '🪷', '❤️', '☸️'];
+const SUTRA_COUNT = 8;                // số câu kinh trong SUTRA ở chua.js — client gửi số thứ tự, không gửi chữ tự do
+// Dâng lễ miễn phí nhưng có thời gian chờ, điểm cộng vào Bảng Công Đức của phòng
+const OFFERINGS = { hoa: { pts: 1, cd: 3e3 }, huong: { pts: 5, cd: 10e3 }, sen: { pts: 20, cd: 30e3 }, chuong: { pts: 99, cd: 60e3 } };
+const boardTop = (room) => [...room.board.values()].sort((a, b) => b.pts - a.pts).slice(0, 10);
 const rooms = [];                     // { id, members: Map(pid → member), incense: [] }
 const members = new Map();
 
@@ -174,7 +178,7 @@ function openStream(req, res, q) {
   const now = Date.now();
   m.room.incense = m.room.incense.filter((i) => now - i.at < 180e3);
   const others = [...m.room.members.values()].filter((x) => x !== m && x.announced).map(pub);
-  res.write(`event: snapshot\ndata: ${JSON.stringify({ now, room: m.room.id, members: others, incense: m.room.incense })}\n\n`);
+  res.write(`event: snapshot\ndata: ${JSON.stringify({ now, room: m.room.id, members: others, incense: m.room.incense, board: boardTop(m.room) })}\n\n`);
   if (!m.announced) { m.announced = true; broadcast(m.room, 'join', pub(m), m.pid); }
   const ping = setInterval(() => res.write(': ping\n\n'), 20e3);
   req.on('close', () => {
@@ -187,7 +191,7 @@ function openStream(req, res, q) {
 Object.assign(routes, {
   'POST /api/room/join'(b) {
     let room = rooms.find((r) => r.members.size < ROOM_SIZE);
-    if (!room) { room = { id: rooms.length + 1, members: new Map(), incense: [] }; rooms.push(room); }
+    if (!room) { room = { id: rooms.length + 1, members: new Map(), incense: [], board: new Map() }; rooms.push(room); }
     const used = new Set([...room.members.values()].map((m) => m.slot));
     let slot = Number.isInteger(b.slot) && b.slot >= 0 && b.slot < ROOM_SIZE && !used.has(b.slot) ? b.slot : 0;
     while (used.has(slot)) slot++;
@@ -227,6 +231,21 @@ Object.assign(routes, {
       if (m.room.incense.length > 60) m.room.incense.shift();
     }
     if (type === 'emote') ev.e = EMOTES.includes(b.e) ? b.e : '🙏';
+    if (type === 'chant') {
+      ev.i = Number.isInteger(b.i) && b.i >= 0 && b.i < SUTRA_COUNT ? b.i : 0;
+      ev.name = m.profile.name;
+    }
+    if (type === 'offer') {
+      const o = OFFERINGS[b.kind];
+      if (!o) return [400, { error: 'Lễ vật không hợp lệ' }];
+      m.lastOffer ||= {};
+      if (now - (m.lastOffer[b.kind] || 0) < o.cd) return [429, { error: 'Xin chờ một chút rồi dâng tiếp' }];
+      m.lastOffer[b.kind] = now;
+      // Gộp theo pháp danh: vào lại phòng (mạng chập chờn, tải lại trang) vẫn cộng tiếp vào dòng cũ
+      const entry = m.room.board.get(m.profile.name) || { name: m.profile.name, pts: 0 };
+      entry.pts += o.pts; m.room.board.set(m.profile.name, entry);
+      Object.assign(ev, { kind: b.kind, name: m.profile.name, total: entry.pts, board: boardTop(m.room) });
+    }
     broadcast(m.room, 'act', ev, m.pid);
     return ev;
   },

@@ -561,7 +561,7 @@ function stepPlant() {
     const r = await act('plant');
     await plantIncense(me, r?.off || [Math.random() * 0.4 - 0.2, Math.random() * 0.2 - 0.1]);
     bell(1);
-    act('stand'); await standUp(me); me.free = true;
+    stopAmbient(); act('stand'); await standUp(me); me.free = true;
     stats.times++; stats.last = Date.now();
     try { localStorage.setItem(KEY, JSON.stringify(stats)); } catch {}
     showCount();
@@ -586,14 +586,21 @@ function stepWish() {
   $('a-skip').onclick = () => finish('');
 }
 
-// Đang đi lại tự do: một nút để bắt đầu dâng hương
+// Đang đi lại tự do: chọn dâng hương hoặc tụng kinh
 function stepFree() {
   panel('', 'Chính điện', 'Đi lại bằng phím WASD / mũi tên hoặc chạm lên sàn. Kéo để xoay góc nhìn.',
-    '<button class="btn" id="a-start">🪔 Đến đệm quỳ dâng hương</button>');
+    `<div class="row"><button class="btn" id="a-start">🪔 Dâng hương</button><button class="btn" id="a-tung">📿 Tụng kinh</button></div>`);
   $('a-start').onclick = startRitual;
+  $('a-tung').onclick = startChantMode;
 }
 async function startRitual() {
   hidePanel();
+  await gotoCushion();
+  stepChoose();
+}
+// Đi tới đệm của mình rồi quỳ xuống (bỏ qua nếu đang quỳ sẵn)
+async function gotoCushion() {
+  if (me.kneeling) return;
   me.free = false; keys.clear(); marker.material.opacity = 0;
   me.target = SLOTS[me.slot].clone();
   await arrived(me);
@@ -605,8 +612,197 @@ async function startRitual() {
   const y0 = cam.yaw, y1 = SLOTS[me.slot].x > 0.6 ? -0.55 : 0.55;
   tween(900, (k) => { cam.yaw = y0 + (y1 - y0) * ease(k); });
   await kneelDown(me);
-  stepChoose();
 }
+
+/* ===== Tụng kinh, dâng lễ, giọng đọc — ý tưởng từ dự án chanh-dien-online (MIT, © 2026 Kent Juno) ===== */
+// Thứ tự câu kinh phải khớp SUTRA_COUNT ở máy chủ: mạng chỉ gửi số thứ tự, không gửi chữ tự do
+const SUTRA = ['Nam mô A Di Đà Phật', 'Nam mô Bổn Sư Thích Ca Mâu Ni Phật', 'Nam mô Đại Bi Quán Thế Âm Bồ Tát',
+  'Nam mô Đại Thế Chí Bồ Tát', 'Nam mô Địa Tạng Vương Bồ Tát', 'Nguyện cầu bình an cho gia đình',
+  'Cầu cho cha mẹ được mạnh khỏe', 'Nguyện đem công đức này hướng về khắp tất cả'];
+const OFFER = {
+  hoa:    { icon: '🌸', label: 'hoa', pts: 1, cd: 3 },
+  huong:  { icon: '🪔', label: 'hương', pts: 5, cd: 10 },
+  sen:    { icon: '🪷', label: 'hoa sen', pts: 20, cd: 30 },
+  chuong: { icon: '🔔', label: 'chuông', pts: 99, cd: 60 },
+};
+const PRAYERS = ['gia đình bình an', 'cha mẹ mạnh khỏe', 'mọi người an lạc', 'chúng sinh thoát khổ', 'tâm luôn thanh tịnh'];
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+// Khung tin nhắn: chỉ dùng textContent nên tên/bình luận không chèn được HTML
+function feed(name, text, gift = false) {
+  const d = document.createElement('div'), b = document.createElement('b');
+  d.className = 'msg' + (gift ? ' gift' : '');
+  b.textContent = name; d.append(b, ' ' + text);
+  $('feed').append(d);
+  while ($('feed').children.length > (document.body.classList.contains('live') ? 4 : 6)) $('feed').firstChild.remove();
+  setTimeout(() => d.classList.add('old'), 15000);
+}
+function renderBoard(list = []) {
+  $('board').hidden = !list.length;
+  const ol = $('board-list'); ol.textContent = '';
+  list.slice(0, 5).forEach((e, i) => {
+    const li = document.createElement('li'), s = document.createElement('span');
+    li.textContent = `${['🥇', '🥈', '🥉'][i] || i + 1 + '.'} ${e.name}`; s.textContent = e.pts.toLocaleString('vi-VN');
+    li.append(s); ol.append(li);
+  });
+}
+let bannerTimer;
+function banner(text) {
+  $('banner').textContent = text; $('banner').classList.add('show');
+  clearTimeout(bannerTimer); bannerTimer = setTimeout(() => $('banner').classList.remove('show'), 4500);
+}
+
+// Giọng đọc tiếng Việt có sẵn trong trình duyệt (Edge/Windows có giọng Hoài My, Nam Minh)
+let voiceOn = true, viVoice = null, ttsQueue = 0, ttsWarned = false;
+function pickVoice() {
+  const vs = speechSynthesis.getVoices();
+  viVoice = vs.find((v) => /^vi/i.test(v.lang) && /Natural|Online/i.test(v.name)) || vs.find((v) => /^vi/i.test(v.lang)) || null;
+}
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); }
+function speak(text) {
+  if (!voiceOn || !('speechSynthesis' in window)) return;
+  if (!viVoice) pickVoice();
+  if (!viVoice) {
+    if (!ttsWarned) {
+      ttsWarned = true;
+      const msg = 'máy này chưa có giọng tiếng Việt nên không đọc thành tiếng.';
+      LIVE ? console.warn('[giọng đọc]', msg) : feed('Hệ thống', msg);   // không hiện lên màn hình phát cho người xem
+    }
+    return;
+  }
+  if (ttsQueue >= 5) return;                     // chống spam: tối đa 5 câu chờ đọc
+  const u = new SpeechSynthesisUtterance(String(text).slice(0, 220));
+  u.voice = viVoice; u.lang = viVoice.lang; u.rate = 0.95;
+  ttsQueue++; u.onend = u.onerror = () => { ttsQueue = Math.max(0, ttsQueue - 1); };
+  speechSynthesis.speak(u);
+}
+
+// Mõ tụng kinh: tiếng gỗ tổng hợp, nhịp đều
+function mok() {
+  actx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+  o.frequency.setValueAtTime(620, t); o.frequency.exponentialRampToValueAtTime(330, t + 0.1);
+  g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.16);
+}
+let chanting = false, mokTimer = null, bellTimer = null, sutraIdx = 0;
+function startAmbient() {
+  if (chanting) return;
+  chanting = true; bell(0.5);
+  mokTimer = setInterval(mok, 1150); bellTimer = setInterval(() => bell(0.5), 45e3);
+}
+function stopAmbient() { chanting = false; clearInterval(mokTimer); clearInterval(bellTimer); }
+
+// Câu kinh nổi trên đầu nhân vật
+function chantBubble(actor, text) {
+  const c = document.createElement('canvas'); c.width = 768; c.height = 112;
+  const g = c.getContext('2d');
+  g.font = '600 46px "Be Vietnam Pro", system-ui, sans-serif';
+  const w = Math.min(760, g.measureText(text).width + 56);
+  g.fillStyle = 'rgba(255,250,242,.94)'; g.beginPath(); g.roundRect((768 - w) / 2, 10, w, 90, 45); g.fill();
+  g.fillStyle = '#9a2232'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 384, 57, 740);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+  s.renderOrder = 12; s.scale.set(1.9, 0.28, 1); s.position.y = 1.75;
+  actor.avatar.root.add(s);
+  tween(3200, (k) => { s.position.y = 1.75 + k * 0.5; s.material.opacity = k < 0.75 ? 1 : (1 - k) * 4; })
+    .then(() => { actor.avatar.root.remove(s); tex.dispose(); });
+}
+function chantLine(actor, text, name) {
+  chantBubble(actor, text);
+  feed(name, text);
+  enqueue(actor, () => bowOnce(actor, false));
+}
+
+async function startChantMode() {
+  hidePanel();
+  await gotoCushion();
+  startAmbient();
+  stepChant();
+}
+function stepChant() {
+  panel('TỤNG KINH', 'Đang tụng kinh', 'Mõ tự gõ theo nhịp, chuông ngân mỗi 45 giây. Chạm "Niệm" để niệm một câu cùng mọi người.',
+    `<button class="btn" id="a-niem">📿 Niệm: ${SUTRA[sutraIdx]}</button>
+     <div class="row"><button class="btn ghost" id="a-ritual">🪔 Dâng hương</button><button class="btn ghost" id="a-up">Đứng dậy</button></div>`);
+  $('a-niem').onclick = () => {
+    const i = sutraIdx; sutraIdx = (sutraIdx + 1) % SUTRA.length;
+    chantLine(me, SUTRA[i], profile.name); act('chant', { i });
+    $('a-niem').disabled = true;
+    setTimeout(() => { if ($('a-niem')) { $('a-niem').disabled = false; $('a-niem').textContent = `📿 Niệm: ${SUTRA[sutraIdx]}`; } }, 1500);
+  };
+  $('a-ritual').onclick = () => { stopAmbient(); stepChoose(); };
+  $('a-up').onclick = async () => { hidePanel(); stopAmbient(); act('stand'); await standUp(me); me.free = true; stepFree(); };
+}
+
+/* Hiệu ứng dâng lễ trong cảnh 3D */
+const fxList = [];
+const addFx = (obj, life, step) => { scene.add(obj); fxList.push({ obj, t: 0, life, step }); };
+const petalMat = new THREE.MeshBasicMaterial({ color: '#ffb3cb', side: THREE.DoubleSide, transparent: true });
+function fx(kind, actor) {
+  const from = actor.avatar.root.position.clone().setY(1.3);
+  if (kind === 'hoa') {                          // cánh hoa rơi quanh bàn thờ
+    for (let i = 0; i < 36; i++) {
+      const p = new THREE.Mesh(new THREE.CircleGeometry(0.05, 6), petalMat);
+      p.scale.y = 0.6; p.position.set((Math.random() - 0.5) * 6, 5 + Math.random() * 2, -5 + Math.random() * 5);
+      const vx = (Math.random() - 0.5) * 0.4, spin = Math.random() * 4, y0 = p.position.y;
+      addFx(p, 4 + Math.random() * 2, (k, dt) => {
+        p.position.y = y0 - k * 5; p.position.x += Math.sin(k * 12 + spin) * dt * 0.4 + vx * dt;
+        p.rotation.set(k * spin * 3, k * spin * 2, 0);
+      });
+    }
+  }
+  if (kind === 'huong') {                        // làn khói lớn bốc lên từ bát hương
+    for (let i = 0; i < 14; i++) {
+      const s = new THREE.Sprite(smokeMat.clone()); s.position.copy(BOWL);
+      const d = Math.random() * 0.6;
+      addFx(s, 3.5, (k) => { s.position.y = BOWL.y + k * 2.4 + d; s.position.x = BOWL.x + Math.sin(k * 6 + i) * 0.2; s.scale.setScalar(0.2 + k * 1.2); s.material.opacity = 0.5 * Math.sin(Math.PI * k); });
+    }
+  }
+  if (kind === 'sen') {                          // hoa sen bay từ người dâng lên trước tượng Phật
+    const g = new THREE.Group();
+    for (let i = 0; i < 8; i++) {
+      const p = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), M.lotus);
+      const a = (i / 8) * Math.PI * 2; p.position.set(Math.sin(a) * 0.1, 0, Math.cos(a) * 0.1); p.scale.set(0.7, 0.5, 1.4); p.rotation.y = a; g.add(p);
+    }
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: HALO, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    glow.scale.setScalar(0.8); g.add(glow);
+    const to = new THREE.Vector3(0, 2.2, BZ + 1.4);
+    addFx(g, 2.8, (k) => { const e = ease(k); g.position.lerpVectors(from, to, e); g.position.y += Math.sin(Math.PI * e) * 0.8; g.rotation.y = k * 6; g.scale.setScalar(k > 0.85 ? (1 - k) / 0.15 : 1); });
+  }
+  if (kind === 'chuong') {                       // tiếng chuông + vòng hào quang lan ra từ tượng Phật
+    bell(1);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.04, 8, 64), new THREE.MeshBasicMaterial({ color: '#ffd970', transparent: true }));
+    ring.position.set(0, 2.6, BZ + 0.6);
+    addFx(ring, 2.2, (k) => { ring.scale.setScalar(0.5 + k * 6); ring.material.opacity = 1 - k; });
+    tween(2200, (k) => { mandorla.scale.setScalar(5.2 * (1 + Math.sin(Math.PI * k) * 0.25)); });
+  }
+}
+
+// Dâng lễ: hiệu ứng + khung tin + giọng xướng tên hồi hướng
+// gift: tên quà TikTok + câu hồi hướng do bộ phát LIVE gửi kèm (nếu có)
+function doOffer(actor, kind, name, gift) {
+  const o = OFFER[kind], what = gift?.name || o.label;
+  fx(kind, actor);
+  feed(name, `thành tâm dâng ${what} ${o.icon}`, true);
+  if (o.pts >= 20 || gift) banner(`${o.icon} ${name} dâng ${what}`);
+  speak(gift?.line || `Nam mô A Di Đà Phật. Phật tử ${name} thành tâm dâng ${o.label}. Nguyện cầu ${pick(PRAYERS)}.`);
+}
+let localPts = 0;
+$('offers').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-kind]'); if (!b || b.disabled) return;
+  const kind = b.dataset.kind, o = OFFER[kind];
+  b.disabled = true; setTimeout(() => (b.disabled = false), o.cd * 1000);
+  const r = await act('offer', { kind });
+  if (net.pid && !r) return;                     // máy chủ từ chối (đang chờ)
+  doOffer(me, kind, profile.name);
+  if (r?.board) renderBoard(r.board);
+  else { localPts += o.pts; renderBoard([{ name: profile.name, pts: localPts }]); }   // chơi một mình
+});
+$('btn-voice').addEventListener('click', () => {
+  voiceOn = !voiceOn;
+  $('btn-voice').textContent = voiceOn ? '🗣️' : '🔇';
+  if (!voiceOn) speechSynthesis?.cancel();
+});
 
 /* ===== Nhân vật & màn tạo nhân vật ===== */
 const AV_KEY = 'tichduc_avatar_v1', MAIN_KEY = 'tichduc_state_v1';
@@ -682,7 +878,8 @@ $('btn-enter').onclick = async () => {
   me.target = constrain(new THREE.Vector3(s.x, 0, s.z + 0.9));
   await arrived(me);
   me.free = true;
-  $('emotes').hidden = false;
+  $('emotes').hidden = false; $('offers').hidden = false;
+  feed(profile.name, 'đã vào chánh điện');
   stepFree();
   $('hint').textContent = 'WASD / mũi tên hoặc chạm sàn để đi · kéo để xoay';
   $('hint').style.opacity = 1;
@@ -710,18 +907,30 @@ async function act(type, data = {}) {
   try { return await post('/api/room/act', { pid: net.pid, token: net.token, type, ...data }); } catch { return null; }
 }
 
-function openStream() {
+// Nghe sự kiện phòng: dùng chung cho phòng chính điện và màn hình LIVE (url khác nhau)
+function listen(url) {
   net.es?.close();
-  const es = net.es = new EventSource(`/api/room/stream?pid=${net.pid}&token=${net.token}`);
+  const es = net.es = new EventSource(url);
   es.addEventListener('snapshot', (e) => {
     const d = JSON.parse(e.data);
     d.members.forEach((m) => addRemote(m, false));
-    d.incense.forEach((i) => { if (!seenIncense.has(i.id)) { seenIncense.add(i.id); plantStatic(i.count, i.off, d.now - i.at); } });
+    (d.incense || []).forEach((i) => { if (!seenIncense.has(i.id)) { seenIncense.add(i.id); plantStatic(i.count, i.off, d.now - i.at); } });
+    renderBoard(d.board);
     updatePeople();
   });
-  es.addEventListener('join', (e) => { addRemote(JSON.parse(e.data), true); updatePeople(); });
+  es.addEventListener('join', (e) => {
+    const m = JSON.parse(e.data);
+    if (remotes.has(m.pid)) return;
+    addRemote(m, true); updatePeople();
+    feed(m.name, 'đã vào chánh điện');
+    speak(`Hoan nghênh ${m.name} vào chánh điện`);
+  });
   es.addEventListener('leave', (e) => { removeRemote(JSON.parse(e.data).pid); updatePeople(); });
   es.addEventListener('act', (e) => onRemoteAct(JSON.parse(e.data)));
+  return es;
+}
+function openStream() {
+  const es = listen(`/api/room/stream?pid=${net.pid}&token=${net.token}`);
   es.onerror = () => {
     // Máy chủ đã xoá phiên (mất mạng lâu): vào lại phòng, giữ chỗ cũ nếu còn trống
     if (es.readyState !== EventSource.CLOSED) return;
@@ -756,6 +965,13 @@ function onRemoteAct(ev) {
   const actor = remotes.get(ev.pid); if (!actor) return;
   if (ev.type === 'emote') return showEmote(actor, ev.e);          // biểu cảm hiện ngay, không cần chờ
   if (ev.type === 'move') return actor.target.set(ev.x, 0, ev.z);
+  if (ev.type === 'chant') return chantLine(actor, SUTRA[ev.i] || SUTRA[0], ev.name);
+  if (ev.type === 'say') return chantLine(actor, ev.text, ev.name);  // bình luận TikTok (chỉ ở màn hình LIVE)
+  if (ev.type === 'offer') {
+    if (OFFER[ev.kind]) doOffer(actor, ev.kind, ev.name, ev.gift);
+    if (ev.board) renderBoard(ev.board);
+    return;
+  }
   enqueue(actor, async () => {
     if (ev.type === 'kneel') { await arrived(actor); await kneelDown(actor); }
     if (ev.type === 'stand') await standUp(actor);
@@ -765,8 +981,8 @@ function onRemoteAct(ev) {
   });
 }
 function updatePeople() {
-  const n = remotes.size + 1;
-  $('people').hidden = !net.pid;
+  const n = remotes.size + (LIVE ? 0 : 1);
+  $('people').hidden = !net.pid && !LIVE;
   $('people').textContent = `👥 ${n} đạo hữu trong chính điện`;
 }
 
@@ -776,6 +992,25 @@ $('emotes').addEventListener('click', (e) => {
   showEmote(me, b.dataset.e); act('emote', { e: b.dataset.e });
   b.disabled = true; setTimeout(() => (b.disabled = false), 1500);
 });
+
+/* ===== Màn hình LIVE (chua.html?live): người xem TikTok là các nhân vật, góc máy rộng cho khung 9:16 =====
+   Bộ phát live/server.mjs phát cùng kiểu sự kiện như phòng chính điện, thêm "tts" (câu cần đọc) và "settings". */
+const LIVE = new URLSearchParams(location.search).has('live');
+if (LIVE) {
+  document.body.classList.add('live');
+  $('creator').classList.add('hide');
+  scene.remove(avatar.root);
+  pos.set(0, 5.4, 10.8); aimAt(new THREE.Vector3(0, 1.0, -3.2));
+  $('live-start').hidden = false;
+  $('live-start').onclick = () => { $('live-start').hidden = true; bell(0.7); startAmbient(); };   // trình duyệt cần một lần bấm mới cho phát tiếng
+  const es = listen('/live/events');
+  es.addEventListener('tts', (e) => speak(JSON.parse(e.data).text));
+  es.addEventListener('settings', (e) => {
+    const s = JSON.parse(e.data);
+    voiceOn = s.tts !== false;
+    if (s.ambient === false) stopAmbient(); else if (actx) startAmbient();
+  });
+}
 
 /* ===== Vòng lặp ===== */
 const clock = new THREE.Clock();
@@ -807,6 +1042,12 @@ renderer.setAnimationLoop(() => {
     if (k >= 1) tipsOf(g).forEach((tp) => { emitters.delete(tp); tp.userData.glow.material.opacity = 0; tp.material.emissiveIntensity = 0; });
   }
   mandorla.material.opacity = 0.75 + Math.sin(t * 0.8) * 0.1;
+  for (let i = fxList.length - 1; i >= 0; i--) {
+    const f = fxList[i]; f.t += dt;
+    const k = Math.min(1, f.t / f.life);
+    f.step(k, dt);
+    if (k >= 1) { scene.remove(f.obj); fxList.splice(i, 1); }
+  }
   emitSmoke(dt);
   renderer.render(scene, camera);
 });

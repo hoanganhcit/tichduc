@@ -63,6 +63,34 @@
   .creator .btn{margin-top:12px}
   .cr-note{text-align:center;font-size:12px;color:var(--muted)}
 
+  /* Tụng kinh & dâng lễ */
+  .top-left{display:flex;gap:8px}
+  .voice{padding:0 12px;font-size:16px;cursor:pointer}
+  .board{min-width:170px;padding:8px 12px;border-radius:14px;background:rgba(42,12,6,.7);color:#ffe6b0;font-size:12px}
+  .board ol{list-style:none;padding:0;margin-top:4px;display:grid;gap:2px}
+  .board li{display:flex;justify-content:space-between;gap:10px}
+  .board li span{color:#ffd970;font-weight:600}
+  .offers{position:fixed;left:12px;top:50%;translate:0 -50%;display:grid;gap:8px}
+  .offers[hidden]{display:none}
+  .offers button{width:52px;padding:6px 0;border-radius:16px;background:rgba(255,250,242,.92);font-size:20px;line-height:1.1;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  .offers small{display:block;font-size:10px;color:var(--maroon);font-weight:600}
+  .offers button:disabled{opacity:.45}
+  .feed{position:fixed;left:76px;bottom:calc(270px + env(safe-area-inset-bottom));max-width:min(320px,calc(100% - 140px));display:grid;gap:4px;pointer-events:none}
+  .feed .msg{padding:5px 10px;border-radius:12px;background:rgba(42,12,6,.62);color:#fff3dc;font-size:13px;transition:opacity 1s}
+  .feed .msg b{color:#ffd970}
+  .feed .msg.gift{background:linear-gradient(90deg,rgba(154,34,50,.85),rgba(217,98,15,.75))}
+  .feed .msg.old{opacity:.35}
+  .banner{position:fixed;left:50%;top:18%;translate:-50% -20px;opacity:0;padding:12px 22px;border-radius:99px;background:linear-gradient(90deg,#9a2232,#d9620f,#f2b53a);color:#fff;font:600 18px var(--serif);box-shadow:0 8px 30px rgba(242,140,40,.5);transition:.4s;pointer-events:none;white-space:nowrap}
+  .banner.show{opacity:1;translate:-50% 0}
+  .live-start{position:fixed;left:50%;top:50%;translate:-50% -50%;padding:16px 28px;border-radius:99px;background:linear-gradient(135deg,var(--gold),var(--saffron));color:#fff;font-weight:700;font-size:18px}
+  /* Màn hình LIVE: chỉ giữ cảnh + khung tin + bảng Công Đức, chữ to cho người xem trên điện thoại */
+  body.live .top-left,body.live .panel,body.live .emotes,body.live .offers,body.live .hint,body.live #count{display:none!important}
+  body.live .feed{left:12px;bottom:3%;max-width:72%}
+  body.live .feed .msg{font-size:16px;padding:6px 12px}
+  body.live .board{font-size:15px;min-width:210px}
+  body.live .count{font-size:15px}
+  body.live .banner{font-size:22px;top:30%;white-space:normal;text-align:center;max-width:90%}
+
   .wish-float{position:fixed;left:50%;top:38%;translate:-50% 0;max-width:80%;font:italic 500 20px var(--serif);color:#ffe6b0;text-align:center;text-shadow:0 0 18px rgba(255,180,60,.9);animation:wishUp 4s ease-out forwards;pointer-events:none}
   @keyframes wishUp{0%{opacity:0;transform:translateY(20px)}20%{opacity:1}100%{opacity:0;transform:translateY(-140px)}}
 </style>
@@ -77,9 +105,21 @@
 <canvas id="scene" aria-label="Chính điện 3D"></canvas>
 
 <div class="top">
-  <a class="back" href="./">‹ Gõ mõ</a>
-  <div class="pills"><span class="count" id="people" hidden></span><span class="count" id="count"></span></div>
+  <div class="top-left"><a class="back" href="./">‹ Gõ mõ</a><button class="back voice" id="btn-voice" aria-label="Bật/tắt giọng đọc">🗣️</button></div>
+  <div class="pills">
+    <span class="count" id="people" hidden></span><span class="count" id="count"></span>
+    <div class="board" id="board" hidden><b>📜 Bảng Công Đức</b><ol id="board-list"></ol></div>
+  </div>
 </div>
+<div class="offers" id="offers" hidden>
+  <button data-kind="hoa" title="Dâng hoa (+1)">🌸<small>Hoa</small></button>
+  <button data-kind="huong" title="Dâng hương (+5)">🪔<small>Hương</small></button>
+  <button data-kind="sen" title="Dâng sen (+20)">🪷<small>Sen</small></button>
+  <button data-kind="chuong" title="Thỉnh chuông (+99)">🔔<small>Chuông</small></button>
+</div>
+<div class="feed" id="feed" aria-live="polite"></div>
+<div class="banner" id="banner"></div>
+<button class="live-start" id="live-start" hidden>🔔 Bật âm thanh</button>
 <div class="emotes" id="emotes" hidden>
   <button data-e="🙏" aria-label="Chắp tay">🙏</button>
   <button data-e="🪷" aria-label="Hoa sen">🪷</button>

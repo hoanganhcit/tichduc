@@ -1,0 +1,11 @@
+{
+  "name": "tichduc-live",
+  "private": true,
+  "type": "module",
+  "description": "Bộ phát TikTok LIVE cho chính điện 3D Tích Đức (chạy trên máy phát)",
+  "scripts": { "start": "node server.mjs" },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "tiktok-live-connector": "2.5.0"
+  }
+}
