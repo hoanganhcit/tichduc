@@ -105,7 +105,7 @@ for (let z = -7; z <= 9; z += 2.5) {
 }
 
 // Cột son + câu đối
-const COUPLETS = [['福慧雙修德圓', '慈悲喜捨普度'], ['佛光普照', '法輪常轉']];
+const COUPLETS = [['Phúc Huệ Song Tu Đức Viên Mãn', 'Từ Bi Hỷ Xả Phổ Độ Chúng Sinh'], ['Phật Quang Phổ Chiếu', 'Pháp Luân Thường Chuyển']];
 [-5, -1.5, 2.5, 6.5].forEach((z, zi) => {
   for (const s of [-1, 1]) {
     const x = s * 4.6;
@@ -123,7 +123,7 @@ const COUPLETS = [['福慧雙修德圓', '慈悲喜捨普度'], ['佛光普照',
 
 // Hoành phi
 add(box(4.6, 1.3, 0.15), M.gold, 0, 5.9, -7.85);
-const plaque = textPlane('大雄寶殿', 4.3, 1.05, { size: 0.75 });
+const plaque = textPlane('ĐẠI HÙNG BẢO ĐIỆN', 4.3, 1.05, { size: 0.75 });
 plaque.position.set(0, 5.9, -7.76); scene.add(plaque);
 
 // Đèn lồng
